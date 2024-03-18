@@ -12,6 +12,7 @@ def load_and_display_tiff_image(tiff_image_path: str,
 
     Returns:
         np.ndarray: The loaded image.
+        :param to_display:
     """
     image = cv2.imread(tiff_image_path)
     if grayscale:
@@ -37,6 +38,13 @@ def display_image(image: np.ndarray, title: str) -> None:
     cv2.destroyAllWindows()
 
 
+def binarize_image(gray_im, blockSize: int = 11, C: int = 2):
+    # Apply adaptive thresholding
+    binary_image = cv2.adaptiveThreshold(gray_im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, blockSize, C)
+
+    return binary_image
+
+
 def median_and_gaussian_blur(image: np.ndarray, median_kernel_size: int = 3,
                              gaussian_kernel_size: int = (5, 5), gaussian_sigmaX: int = 0):
     # Apply median filter
@@ -46,6 +54,32 @@ def median_and_gaussian_blur(image: np.ndarray, median_kernel_size: int = 3,
     gaussian_blurred = cv2.GaussianBlur(median_blurred, gaussian_kernel_size, gaussian_sigmaX)
 
     return gaussian_blurred
+
+
+def binarize_register_images(gray_im1, gray_im2):
+    binary_image1 = binarize_image(gray_im1)
+    binary_image2 = binarize_image(gray_im2)
+
+    display_2_images_side_by_side(binary_image1, binary_image2)
+
+    # Find contours in the binary images
+    contours1, _ = cv2.findContours(binary_image1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours2, _ = cv2.findContours(binary_image2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Calculate the bounding boxes of the contours
+    x1, y1, w1, h1 = cv2.boundingRect(contours1[0])
+    x2, y2, w2, h2 = cv2.boundingRect(contours2[0])
+
+    # Calculate the translation to align the bounding boxes
+    dx = x1 - x2
+    dy = y1 - y2
+
+    # Apply translation to the second binary image
+    rows, cols = binary_image2.shape[:2]
+    M = np.float32([[1, 0, dx], [0, 1, dy]])
+    registered_binary_image = cv2.warpAffine(gray_im2, M, (cols, rows))
+
+    return registered_binary_image
 
 
 def register_images(gray_im1, gray_im2):
@@ -99,17 +133,30 @@ def shift_image(image: np.ndarray, w: int, h: int) -> np.ndarray:
     return shifted_image
 
 
+def subtract_2_images(img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
+    """Subtracts 2 images.
+
+    Args:
+        img1 (np.ndarray): The first image.
+        img2 (np.ndarray): The second image.
+    """
+    return np.clip(np.abs(img1.astype(int) - img2.astype(int)), 0, 255).astype(np.uint8)
+
+
 if __name__ == "__main__":
-    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_inspected_image.tif",
+    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_inspected_image.tif",
                                              to_display=False)
-    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_reference_image.tif",
+    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_reference_image.tif",
                                                to_display=False)
     # display_2_images_side_by_side(inspect_im, reference_im)
     # register the 2 images using sift
     # registered_reference_im = register_images(median_and_gaussian_blur(inspect_im),
     #                                           median_and_gaussian_blur(reference_im))
-    registered_reference_im = shift_image(reference_im, -24, 4)
-    display_2_images_side_by_side(inspect_im, registered_reference_im)
-    diff = np.abs(median_and_gaussian_blur(inspect_im) - median_and_gaussian_blur(registered_reference_im))
+    # registered_reference_im = shift_image(reference_im, -6, -5)
+    registered_reference_im = binarize_register_images(median_and_gaussian_blur(inspect_im),
+                                                       median_and_gaussian_blur(reference_im))
+    display_2_images_side_by_side(median_and_gaussian_blur(inspect_im),
+                                  median_and_gaussian_blur(registered_reference_im))
+    diff = subtract_2_images(median_and_gaussian_blur(inspect_im), median_and_gaussian_blur(registered_reference_im))
     display_image(diff, title="Difference")
     a = 1
