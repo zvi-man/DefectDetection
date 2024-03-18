@@ -140,23 +140,42 @@ def subtract_2_images(img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
         img1 (np.ndarray): The first image.
         img2 (np.ndarray): The second image.
     """
-    return np.clip(np.abs(img1.astype(int) - img2.astype(int)), 0, 255).astype(np.uint8)
+    mask_im1 = img1 == 0
+    mask_im2 = img2 == 0
+    diff_im = np.clip(np.abs(img1.astype(int) - img2.astype(int)), 0, 255).astype(np.uint8)
+    diff_im[mask_im1] = 0
+    diff_im[mask_im2] = 0
+    return diff_im
 
 
 if __name__ == "__main__":
-    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_inspected_image.tif",
+    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_inspected_image.tif",
                                              to_display=False)
-    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_reference_image.tif",
+    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_reference_image.tif",
                                                to_display=False)
     # display_2_images_side_by_side(inspect_im, reference_im)
     # register the 2 images using sift
     # registered_reference_im = register_images(median_and_gaussian_blur(inspect_im),
     #                                           median_and_gaussian_blur(reference_im))
-    # registered_reference_im = shift_image(reference_im, -6, -5)
-    registered_reference_im = binarize_register_images(median_and_gaussian_blur(inspect_im),
-                                                       median_and_gaussian_blur(reference_im))
+
+
+    registered_reference_im = shift_image(reference_im, -6, -5)
+    # registered_reference_im = shift_image(reference_im, -24, 4)
+
+    # registered_reference_im = binarize_register_images(median_and_gaussian_blur(inspect_im),
+    #                                                    median_and_gaussian_blur(reference_im))
     display_2_images_side_by_side(median_and_gaussian_blur(inspect_im),
                                   median_and_gaussian_blur(registered_reference_im))
     diff = subtract_2_images(median_and_gaussian_blur(inspect_im), median_and_gaussian_blur(registered_reference_im))
     display_image(diff, title="Difference")
-    a = 1
+
+    threshold_value = 40  # Adjust threshold value as needed
+    ret, diff_binary_img = cv2.threshold(diff, threshold_value, 255, cv2.THRESH_BINARY)
+    display_image(diff_binary_img, title="Difference binary")
+
+    kernel = np.ones((3, 3), np.uint8)
+    diff_binary_img = cv2.erode(diff_binary_img, kernel, iterations=1)
+    diff_binary_img = cv2.dilate(diff_binary_img, kernel, iterations=1)
+
+    display_image(diff_binary_img, title="Difference binary")
+
