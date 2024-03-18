@@ -38,9 +38,9 @@ def display_image(image: np.ndarray, title: str) -> None:
     cv2.destroyAllWindows()
 
 
-def binarize_image(gray_im, blockSize: int = 11, C: int = 2):
+def binarize_image(gray_im):
     # Apply adaptive thresholding
-    binary_image = cv2.adaptiveThreshold(gray_im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, blockSize, C)
+    _, binary_image = cv2.threshold(gray_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     return binary_image
 
@@ -144,9 +144,9 @@ def subtract_2_images(img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_inspected_image.tif",
+    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_inspected_image.tif",
                                              to_display=False)
-    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_reference_image.tif",
+    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_reference_image.tif",
                                                to_display=False)
     # display_2_images_side_by_side(inspect_im, reference_im)
     # register the 2 images using sift
