@@ -15,11 +15,11 @@ def plot_defects(image_path: str, defects: list):
 if __name__ == "__main__":
     # Image 1
     defects = [[149, 334], [82, 245], [97, 82]]
-    image_path = r"data/defective_examples/case1_inspected_image.tif"
+    image_path = r"../data/defective_examples/case1_inspected_image.tif"
     plot_defects(image_path, defects)
 
     defects = [[344, 265], [105, 108], [80, 262]]
-    image_path = r"data/defective_examples/case2_inspected_image.tif"
+    image_path = r"../data/defective_examples/case2_inspected_image.tif"
     plot_defects(image_path, defects)
 
 

@@ -13,7 +13,7 @@ def convert_tiff_to_jpg(tiff_path: str, jpg_path: str):
 
 
 if __name__ == "__main__":
-    tiff_image_path = r"data/defective_examples/case1_inspected_image.tif"
+    tiff_image_path = r"../data/defective_examples/case1_inspected_image.tif"
     # Provide the path to your TIFF image and the desired path for the JPG output
     inspect_im = load_and_display_tiff_image(tiff_image_path=tiff_image_path,
                                             to_display=False)
