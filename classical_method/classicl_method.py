@@ -8,6 +8,8 @@ from utilities.general_utils import GeneralUtils
 
 
 def binarize_register_images(gray_im1, gray_im2):
+    gray_im1 = AugmentationUtils.median_and_gaussian_blur(gray_im1)
+    gray_im2 = AugmentationUtils.median_and_gaussian_blur(gray_im2)
     binary_image1 = AugmentationUtils.binarize_image(gray_im1)
     binary_image2 = AugmentationUtils.binarize_image(gray_im2)
 
@@ -104,54 +106,56 @@ def experiments():
     DisplayUtils.display_image(diff_binary_img, title="Difference binary")
 
 
-def edge_experiments():
+def brute_force_register_images(inspect_im, reference_im):
+    return reference_im
+
+
+def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
+                               display_images: bool = False) -> np.ndarray:
+    # load images
     inspect_im = GeneralUtils.load_and_display_tiff_image(
-        tiff_image_path=r"../data/defective_examples/case1_inspected_image.tif",
-        to_display=True)
+        tiff_image_path=inspect_im_path,
+        to_display=display_images)
     reference_im = GeneralUtils.load_and_display_tiff_image(
-        tiff_image_path=r"../data/defective_examples/case1_reference_image.tif",
-        to_display=True)
+        tiff_image_path=reference_im_path,
+        to_display=display_images)
 
-    # display image histograms
-    hist1, bins1 = np.histogram(inspect_im.ravel(), bins=256, range=[0, 256])
-    hist2, bins2 = np.histogram(reference_im.ravel(), bins=256, range=[0, 256])
+    registered_reference_im = AugmentationUtils.shift_image(reference_im, -6, -5)
 
-    # Plot histograms
-    plt.figure(figsize=(10, 6))
+    # initial registration of the reference image
+    # registered_reference_im = binarize_register_images(inspect_im, reference_im)
 
-    plt.subplot(2, 1, 1)
-    plt.title('Grayscale Histogram - Image 1')
-    plt.xlabel('Pixel Value')
-    plt.ylabel('Frequency')
-    plt.plot(hist1, color='black')
-    plt.xlim([0, 256])
-    plt.xticks(np.arange(0, 256, step=50))
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # secondary brute force registration of the reference image
+    # registered_reference_im = brute_force_register_images(inspect_im, registered_reference_im)
 
-    plt.subplot(2, 1, 2)
-    plt.title('Grayscale Histogram - Image 2')
-    plt.xlabel('Pixel Value')
-    plt.ylabel('Frequency')
-    plt.plot(hist2, color='black')
-    plt.xlim([0, 256])
-    plt.xticks(np.arange(0, 256, step=50))
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # subtract the 2 images
+    diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(AugmentationUtils.median_and_gaussian_blur(inspect_im),
+                                                               AugmentationUtils.median_and_gaussian_blur(
+                                                                   registered_reference_im))
+    DisplayUtils.display_image(diff, title="Difference")
 
-    plt.tight_layout()
-    plt.show()
+    # create mask from diff image
+    diff_binary_img = diff_image_to_mask(diff)
 
-    # Displaying values on x-axis
-    plt.xticks(np.arange(0, 256, step=50))  # Adjust this according to your preference
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    return diff_binary_img
 
-    # run edge detection
-    blurred_image = cv2.GaussianBlur(inspect_im, (3, 3), 0)
 
-    # Apply Canny edge detector
-    edges = cv2.Canny(blurred_image, 50, 150)  # You can adjust these threshold values
+def diff_image_to_mask(diff: np.ndarray) -> np.ndarray:
+    # threshold the difference image
+    threshold_value = 40  # Adjust threshold value as needed
+    ret, diff_binary_img = cv2.threshold(diff, threshold_value, 255, cv2.THRESH_BINARY)
 
-    DisplayUtils.display_image(edges, title="Edges")
+    DisplayUtils.display_image(diff_binary_img, title="Difference binary")
+
+    # morphology operation
+    kernel = np.ones((3, 3), np.uint8)
+    diff_binary_img = cv2.erode(diff_binary_img, kernel, iterations=1)
+    diff_binary_img = cv2.dilate(diff_binary_img, kernel, iterations=1)
+    return diff_binary_img
 
 
 if __name__ == "__main__":
-    experiments()
+    inspected_img_path = r"../data/defective_examples/case2_inspected_image.tif"
+    reference_img_path = r"../data/defective_examples/case2_reference_image.tif"
+    defect_mask = classical_defect_detection(inspected_img_path, reference_img_path, display_images=True)
+    DisplayUtils.display_image(defect_mask, "binary output mask")
