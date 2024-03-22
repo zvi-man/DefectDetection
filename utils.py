@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def load_and_display_tiff_image(tiff_image_path: str,
@@ -148,7 +149,7 @@ def subtract_2_images(img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
     return diff_im
 
 
-if __name__ == "__main__":
+def experiments():
     inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_inspected_image.tif",
                                              to_display=False)
     reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case2_reference_image.tif",
@@ -157,7 +158,6 @@ if __name__ == "__main__":
     # register the 2 images using sift
     # registered_reference_im = register_images(median_and_gaussian_blur(inspect_im),
     #                                           median_and_gaussian_blur(reference_im))
-
 
     registered_reference_im = shift_image(reference_im, -6, -5)
     # registered_reference_im = shift_image(reference_im, -24, 4)
@@ -179,3 +179,55 @@ if __name__ == "__main__":
 
     display_image(diff_binary_img, title="Difference binary")
 
+
+def edge_experiments():
+    inspect_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_inspected_image.tif",
+                                             to_display=True)
+    reference_im = load_and_display_tiff_image(tiff_image_path=r"data/defective_examples/case1_reference_image.tif",
+                                               to_display=True)
+
+
+
+    # display image histograms
+    hist1, bins1 = np.histogram(inspect_im.ravel(), bins=256, range=[0, 256])
+    hist2, bins2 = np.histogram(reference_im.ravel(), bins=256, range=[0, 256])
+
+    # Plot histograms
+    plt.figure(figsize=(10, 6))
+
+    plt.subplot(2, 1, 1)
+    plt.title('Grayscale Histogram - Image 1')
+    plt.xlabel('Pixel Value')
+    plt.ylabel('Frequency')
+    plt.plot(hist1, color='black')
+    plt.xlim([0, 256])
+    plt.xticks(np.arange(0, 256, step=50))
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    plt.subplot(2, 1, 2)
+    plt.title('Grayscale Histogram - Image 2')
+    plt.xlabel('Pixel Value')
+    plt.ylabel('Frequency')
+    plt.plot(hist2, color='black')
+    plt.xlim([0, 256])
+    plt.xticks(np.arange(0, 256, step=50))
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    plt.tight_layout()
+    plt.show()
+
+    # Displaying values on x-axis
+    plt.xticks(np.arange(0, 256, step=50))  # Adjust this according to your preference
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    # run edge detection
+    blurred_image = cv2.GaussianBlur(inspect_im, (3, 3), 0)
+
+    # Apply Canny edge detector
+    edges = cv2.Canny(blurred_image, 50, 150)  # You can adjust these threshold values
+
+    display_image(edges, title="Edges")
+
+
+if __name__ == "__main__":
+    edge_experiments()
