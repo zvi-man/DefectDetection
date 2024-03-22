@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -106,8 +108,22 @@ def experiments():
     DisplayUtils.display_image(diff_binary_img, title="Difference binary")
 
 
-def brute_force_register_images(inspect_im, reference_im):
-    return reference_im
+def get_diff_per_non_zero_pixel(diff_im: np.ndarray) -> float:
+    return diff_im.sum() / np.count_nonzero(diff_im) 
+
+
+def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[int] = [-25, 25],
+                                y_shift_range: List[int] = [-25, 25]):
+    results = np.zeros((len(x_shift_range), len(y_shift_range)))
+    for x_i, x_shift in enumerate(x_shift_range):
+        for y_i, y_shift in enumerate(y_shift_range):
+            registered_reference_im = AugmentationUtils.shift_image(reference_im, x_shift, y_shift)
+            diff_im = GeneralUtils.subtract_2_images_only_non_zero_pixels(AugmentationUtils.median_and_gaussian_blur(inspect_im),
+                                                                       AugmentationUtils.median_and_gaussian_blur(
+                                                                           registered_reference_im))
+            results[x_i, y_i] = get_diff_per_non_zero_pixel(diff_im)
+    best_x_shift, best_y_shift = np.unravel_index(results.argmax)
+    return AugmentationUtils.shift_image(reference_im, best_x_shift, best_y_shift)
 
 
 def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
@@ -120,13 +136,13 @@ def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
         tiff_image_path=reference_im_path,
         to_display=display_images)
 
-    registered_reference_im = AugmentationUtils.shift_image(reference_im, -6, -5)
+    # registered_reference_im = AugmentationUtils.shift_image(reference_im, -6, -5)
 
     # initial registration of the reference image
     # registered_reference_im = binarize_register_images(inspect_im, reference_im)
 
     # secondary brute force registration of the reference image
-    # registered_reference_im = brute_force_register_images(inspect_im, registered_reference_im)
+    registered_reference_im = brute_force_register_images(inspect_im, reference_im)
 
     # subtract the 2 images
     diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(AugmentationUtils.median_and_gaussian_blur(inspect_im),
