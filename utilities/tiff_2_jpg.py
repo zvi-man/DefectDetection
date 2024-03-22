@@ -1,6 +1,6 @@
 from PIL import Image
 import os
-from utils import load_and_display_tiff_image
+from general_utils import load_and_display_tiff_image
 
 
 def convert_tiff_to_jpg(tiff_path: str, jpg_path: str):
