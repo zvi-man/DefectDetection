@@ -109,11 +109,11 @@ def experiments():
 
 
 def get_diff_per_non_zero_pixel(diff_im: np.ndarray) -> float:
-    return diff_im.sum() / np.count_nonzero(diff_im) 
+    return diff_im.sum() / np.count_nonzero(diff_im)
 
 
-def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[int] = [-25, 25],
-                                y_shift_range: List[int] = [-25, 25]):
+def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[int] = list(range(-25, 25)),
+                                y_shift_range: List[int] = list(range(-25, 25))):
     results = np.zeros((len(x_shift_range), len(y_shift_range)))
     for x_i, x_shift in enumerate(x_shift_range):
         for y_i, y_shift in enumerate(y_shift_range):
@@ -122,7 +122,9 @@ def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[in
                                                                        AugmentationUtils.median_and_gaussian_blur(
                                                                            registered_reference_im))
             results[x_i, y_i] = get_diff_per_non_zero_pixel(diff_im)
-    best_x_shift, best_y_shift = np.unravel_index(results.argmax)
+    best_x_shift_ind, best_y_shift_ind = np.unravel_index(results.argmin(), results.shape)
+    best_x_shift = x_shift_range[best_x_shift_ind]
+    best_y_shift = y_shift_range[best_y_shift_ind]
     return AugmentationUtils.shift_image(reference_im, best_x_shift, best_y_shift)
 
 
@@ -145,9 +147,7 @@ def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
     registered_reference_im = brute_force_register_images(inspect_im, reference_im)
 
     # subtract the 2 images
-    diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(AugmentationUtils.median_and_gaussian_blur(inspect_im),
-                                                               AugmentationUtils.median_and_gaussian_blur(
-                                                                   registered_reference_im))
+    diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(inspect_im, registered_reference_im)
     DisplayUtils.display_image(diff, title="Difference")
 
     # create mask from diff image
@@ -171,7 +171,7 @@ def diff_image_to_mask(diff: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    inspected_img_path = r"../data/defective_examples/case2_inspected_image.tif"
-    reference_img_path = r"../data/defective_examples/case2_reference_image.tif"
+    inspected_img_path = r"../data/defective_examples/case1_inspected_image.tif"
+    reference_img_path = r"../data/defective_examples/case1_reference_image.tif"
     defect_mask = classical_defect_detection(inspected_img_path, reference_img_path, display_images=True)
     DisplayUtils.display_image(defect_mask, "binary output mask")
