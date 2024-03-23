@@ -114,6 +114,7 @@ def get_diff_per_non_zero_pixel(diff_im: np.ndarray) -> float:
 
 def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[int] = list(range(-25, 25)),
                                 y_shift_range: List[int] = list(range(-25, 25))):
+    # TODO: Find minimum value in subpixel shift range
     results = np.zeros((len(x_shift_range), len(y_shift_range)))
     for x_i, x_shift in enumerate(x_shift_range):
         for y_i, y_shift in enumerate(y_shift_range):
@@ -130,7 +131,7 @@ def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[in
 
 def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
                                display_images: bool = False) -> np.ndarray:
-    # load images
+    # 1. load images
     inspect_im = GeneralUtils.load_and_display_tiff_image(
         tiff_image_path=inspect_im_path,
         to_display=display_images)
@@ -138,21 +139,16 @@ def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
         tiff_image_path=reference_im_path,
         to_display=display_images)
 
-    # registered_reference_im = AugmentationUtils.shift_image(reference_im, -6, -5)
+    # 2. registration of the reference image
+    # registered_reference_im = binarize_register_images(inspect_im, reference_im)  # works
+    registered_reference_im = brute_force_register_images(inspect_im, reference_im)  # works better
 
-    # initial registration of the reference image
-    # registered_reference_im = binarize_register_images(inspect_im, reference_im)
-
-    # secondary brute force registration of the reference image
-    registered_reference_im = brute_force_register_images(inspect_im, reference_im)
-
-    # subtract the 2 images
+    # 3. subtract the 2 images
     diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(inspect_im, registered_reference_im)
     DisplayUtils.display_image(diff, title="Difference")
 
-    # create mask from diff image
+    # 4. create mask from diff image
     diff_binary_img = diff_image_to_mask(diff)
-
     return diff_binary_img
 
 
@@ -160,6 +156,8 @@ def diff_image_to_mask(diff: np.ndarray) -> np.ndarray:
     # threshold the difference image
     threshold_value = 40  # Adjust threshold value as needed
     ret, diff_binary_img = cv2.threshold(diff, threshold_value, 255, cv2.THRESH_BINARY)
+    # blur = cv2.GaussianBlur(diff, (5, 5), 0)
+    # ret, diff_binary_img = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     DisplayUtils.display_image(diff_binary_img, title="Difference binary")
 
@@ -167,11 +165,14 @@ def diff_image_to_mask(diff: np.ndarray) -> np.ndarray:
     kernel = np.ones((3, 3), np.uint8)
     diff_binary_img = cv2.erode(diff_binary_img, kernel, iterations=1)
     diff_binary_img = cv2.dilate(diff_binary_img, kernel, iterations=1)
+
+    DisplayUtils.display_image(diff_binary_img, title="Difference binary after morphological operation")
+
     return diff_binary_img
 
 
 if __name__ == "__main__":
-    inspected_img_path = r"../data/defective_examples/case1_inspected_image.tif"
-    reference_img_path = r"../data/defective_examples/case1_reference_image.tif"
+    inspected_img_path = r"../data/defective_examples/case2_inspected_image.tif"
+    reference_img_path = r"../data/defective_examples/case2_reference_image.tif"
     defect_mask = classical_defect_detection(inspected_img_path, reference_img_path, display_images=True)
     DisplayUtils.display_image(defect_mask, "binary output mask")
