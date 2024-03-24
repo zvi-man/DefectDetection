@@ -77,9 +77,9 @@ def add_random_defect(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         tuple: A tuple containing the image with the added defect and the corresponding mask.
     """
     height, width = image.shape
-    defect_size_x = np.random.randint(0, int(height / 2))
-    defect_size_y = np.random.randint(0, int(width / 2))
-    defect_intensity = np.random.randint(0, 255)
+    defect_size_x = np.random.randint(1, int(height / 2))
+    defect_size_y = np.random.randint(1, int(width / 2))
+    defect_intensity = np.random.randint(1, 255)
     is_defect_plus = np.random.choice([True, False])
     return add_defect(image, defect_size_x=defect_size_x, defect_size_y=defect_size_y,
                       defect_intensity=defect_intensity, is_defect_plus=is_defect_plus)
