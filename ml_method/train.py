@@ -1,10 +1,10 @@
 import torch
-from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 import numpy as np
 from tqdm import tqdm
 
+from evaluation.metrics import f1_score_masks
 from ml_method.loss import DiceLoss
 from ml_method.transform import get_image_and_mask_transforms
 from ml_method.unet import load_pretrained_model
@@ -69,7 +69,7 @@ def train(reference_img_path):
                 outputs = model(images)
                 loss = criterion(outputs, masks)
                 loss_val.append(loss.item())
-                f1_val.append(f1_score(masks.cpu().numpy().flatten(), outputs.cpu().numpy().flatten()) > 0.5)
+                f1_val.append(f1_score_masks(masks.cpu().numpy().flatten(), outputs.cpu().numpy().flatten() > 0.5))
 
             train_loss_mean = np.mean(loss_train)
             val_loss_mean = np.mean(loss_val)
