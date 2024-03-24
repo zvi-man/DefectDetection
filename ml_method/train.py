@@ -1,4 +1,5 @@
 import torch
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 import numpy as np
@@ -46,6 +47,7 @@ def train(reference_img_path):
     for epoch in range(num_epochs):
         loss_train = []
         loss_val = []
+        f1_val = []
         model.train()
         for i, (images, masks) in tqdm(enumerate(train_dataloader)):
             images = images.float().to(device)
@@ -67,10 +69,12 @@ def train(reference_img_path):
                 outputs = model(images)
                 loss = criterion(outputs, masks)
                 loss_val.append(loss.item())
+                f1_val.append(f1_score(masks.cpu().numpy().flatten(), outputs.cpu().numpy().flatten()))
 
             train_loss_mean = np.mean(loss_train)
             val_loss_mean = np.mean(loss_val)
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {train_loss_mean}, Val Loss: {val_loss_mean}")
+            f1_val_mean = np.mean(f1_val)
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {train_loss_mean}, Val Loss: {val_loss_mean}, Val F1: {f1_val_mean}")
             # Save the model
             torch.save(model.state_dict(), f"unet_{epoch}.pt")
 
