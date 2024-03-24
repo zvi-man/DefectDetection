@@ -11,9 +11,8 @@ from synthetic_data_creation.synthetic_dataset import DefectDataset
 from utilities.general_utils import GeneralUtils
 
 
-def train():
+def train(reference_img_path):
     # load reference image
-    reference_img_path = r"../data/defective_examples/case1_reference_image.tif"
     num_images = 4000
     reference_im = GeneralUtils.load_and_display_tiff_image(
         tiff_image_path=reference_img_path,
@@ -75,4 +74,5 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    img_path = r"../data/defective_examples/case1_reference_image.tif"
+    train(img_path)
