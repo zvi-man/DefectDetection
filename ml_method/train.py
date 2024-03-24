@@ -49,8 +49,8 @@ def train():
         loss_val = []
         model.train()
         for i, (images, masks) in tqdm(enumerate(train_dataloader)):
-            images = images.to(device)
-            masks = masks.to(device)
+            images = images.float().to(device)
+            masks = masks.float().to(device)
             optimizer.zero_grad()
 
             outputs = model(images)
@@ -63,8 +63,8 @@ def train():
         model.eval()
         with torch.no_grad():
             for i, (images, masks) in tqdm(enumerate(val_dataloader)):
-                images = images.to(device)
-                masks = masks.to(device)
+                images = images.float().to(device)
+                masks = masks.float().to(device)
                 outputs = model(images)
                 loss = criterion(outputs, masks)
                 loss_val.append(loss.item())
