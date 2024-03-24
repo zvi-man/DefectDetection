@@ -71,6 +71,8 @@ def train(reference_img_path):
             train_loss_mean = np.mean(loss_train)
             val_loss_mean = np.mean(loss_val)
             print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {train_loss_mean}, Val Loss: {val_loss_mean}")
+            # Save the model
+            torch.save(model.state_dict(), f"unet_{epoch}.pt")
 
 
 if __name__ == "__main__":
