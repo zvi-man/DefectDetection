@@ -4,9 +4,12 @@ from scipy.stats import multivariate_normal
 
 from utilities.general_utils import GeneralUtils
 
+# Constants
+NOTABLE_PIXEL_DIFF = 20
+
 
 def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
-               defect_intensity: int = 100):
+               defect_intensity: int = 100, is_defect_plus: bool = True):
     """
     Add a synthetic defect to the input image and generate a corresponding mask.
 
@@ -15,6 +18,7 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
         defect_size_x (int): Size of the defect kernel (default is 5).
         defect_size_y (int): Size of the defect kernel (default is 5).
         defect_intensity (float): Intensity of the defect (default is 0.5).
+        is_defect_plus (bool): True if the defect is to be added to the image (default is True).
 
     Returns:
         tuple: A tuple containing the image with the added defect and the corresponding mask.
@@ -26,9 +30,12 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
 
     # Create a mountain-like defect kernel
     defect_kernel = np.zeros((defect_size_x, defect_size_y), dtype=np.uint8)
+    # TODO:
+    #  1. add option for covariances matrix that is not diagonal
+    #  2. add option for non gaussian like defects
     mu = np.array([defect_size_x / 2, defect_size_y / 2])  # Mean
-    covariance_matrix = np.array([[int(defect_size_x/3), 0],
-                                  [0, int(defect_size_x/3)]])  # Covariance matrix
+    covariance_matrix = np.array([[int(defect_size_x / 3), 0],
+                                  [0, int(defect_size_y / 3)]])  # Covariance matrix
     x_def, y_def = np.mgrid[range(defect_size_x), range(defect_size_y)]
     pos = np.dstack((x_def, y_def))
 
@@ -44,7 +51,18 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
     x_offset = x - int(defect_size_x / 2)
     y_offset = y - int(defect_size_y / 2)
     original_patch = image_with_defect[x_offset:x_offset + defect_size_x, y_offset:y_offset + defect_size_y].copy()
-    patch_with_defect = np.clipZ?Dyy[[[[[[[[[[[[[[[[[[[[efect_mask
+    if is_defect_plus:
+        patch_with_defect = np.clip(original_patch.astype(int) + defect_kernel.astype(int), 0, 255).astype(np.uint8)
+    else:
+        patch_with_defect = np.clip(original_patch.astype(int) - defect_kernel.astype(int), 0, 255).astype(np.uint8)
+    image_with_defect[x_offset:x_offset + defect_size_x, y_offset:y_offset + defect_size_y] = patch_with_defect
+
+    # Create a mask for the defect
+    defect_mask = np.zeros_like(image_with_defect)
+    defect_kernel_mask = np.abs(patch_with_defect.astype(int) - original_patch.astype(int)) > NOTABLE_PIXEL_DIFF
+    defect_mask[x_offset:x_offset + defect_size_x, y_offset:y_offset + defect_size_y] = defect_kernel_mask
+
+    return image_with_defect, defect_mask
 
 
 def example_add_defect():
@@ -56,8 +74,8 @@ def example_add_defect():
         to_display=True)
 
     # Add a defect to the SEM image and get the defect mask
-    sem_with_defect, defect_mask = add_defect(reference_im, defect_size_x=30, defect_size_y=30,
-                                              defect_intensity=100)
+    sem_with_defect, defect_mask = add_defect(reference_im, defect_size_x=60, defect_size_y=20,
+                                              defect_intensity=100, is_defect_plus=False)
 
     # Display the original SEM image, SEM image with defect, and the defect mask
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
