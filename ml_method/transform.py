@@ -25,6 +25,14 @@ def get_image_and_mask_transforms(scale=None, angle=None):
     return Compose(transform_list)
 
 
+def get_image_and_mask_transforms_inference():
+    transform_list = [NormalizeImage(),
+                      Resize((256, 256)),
+                      ToTensor(),
+                      DuplicateChannels()]
+    return Compose(transform_list)
+
+
 class DuplicateChannels(object):
     def __call__(self, sample):
         img, mask = sample
