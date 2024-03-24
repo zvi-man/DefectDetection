@@ -63,7 +63,7 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
     defect_kernel_mask = np.abs(patch_with_defect.astype(int) - original_patch.astype(int)) > NOTABLE_PIXEL_DIFF
     defect_mask[x_offset:x_offset + defect_size_x, y_offset:y_offset + defect_size_y] = defect_kernel_mask
 
-    return image_with_defect, defect_mask
+    return image_with_defect, defect_mask * 255
 
 
 def add_random_defect(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -81,8 +81,13 @@ def add_random_defect(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     defect_size_y = np.random.randint(1, int(width / 2))
     defect_intensity = np.random.randint(1, 255)
     is_defect_plus = np.random.choice([True, False])
-    return add_defect(image, defect_size_x=defect_size_x, defect_size_y=defect_size_y,
-                      defect_intensity=defect_intensity, is_defect_plus=is_defect_plus)
+    try:
+        return add_defect(image, defect_size_x=defect_size_x, defect_size_y=defect_size_y,
+                          defect_intensity=defect_intensity, is_defect_plus=is_defect_plus)
+    except:
+        print(f"Failed to add a random defect with size {defect_size_x}, {defect_size_y}, "
+              f"{defect_intensity}, {is_defect_plus}")
+        raise
 
 
 def example_add_defect():
