@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
@@ -9,7 +11,7 @@ NOTABLE_PIXEL_DIFF = 20
 
 
 def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
-               defect_intensity: int = 100, is_defect_plus: bool = True):
+               defect_intensity: int = 100, is_defect_plus: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """
     Add a synthetic defect to the input image and generate a corresponding mask.
 
@@ -28,8 +30,7 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
     x = np.random.randint(defect_size_x, height - defect_size_x)
     y = np.random.randint(defect_size_y, width - defect_size_y)
 
-    # Create a mountain-like defect kernel
-    defect_kernel = np.zeros((defect_size_x, defect_size_y), dtype=np.uint8)
+    # Create defect kernel
     # TODO:
     #  1. add option for covariances matrix that is not diagonal
     #  2. add option for non gaussian like defects
@@ -65,6 +66,25 @@ def add_defect(image, defect_size_x: int = 5, defect_size_y: int = 5,
     return image_with_defect, defect_mask
 
 
+def add_random_defect(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Add a random defect to the input image and generate a corresponding mask.
+
+    Parameters:
+        image (numpy.ndarray): 2D array representing the SEM image.
+
+    Returns:
+        tuple: A tuple containing the image with the added defect and the corresponding mask.
+    """
+    height, width = image.shape
+    defect_size_x = np.random.randint(0, int(height / 2))
+    defect_size_y = np.random.randint(0, int(width / 2))
+    defect_intensity = np.random.randint(0, 255)
+    is_defect_plus = np.random.choice([True, False])
+    return add_defect(image, defect_size_x=defect_size_x, defect_size_y=defect_size_y,
+                      defect_intensity=defect_intensity, is_defect_plus=is_defect_plus)
+
+
 def example_add_defect():
     # Example usage:
     # Generate a synthetic SEM image
@@ -74,8 +94,7 @@ def example_add_defect():
         to_display=True)
 
     # Add a defect to the SEM image and get the defect mask
-    sem_with_defect, defect_mask = add_defect(reference_im, defect_size_x=60, defect_size_y=20,
-                                              defect_intensity=100, is_defect_plus=False)
+    sem_with_defect, defect_mask = add_random_defect(reference_im)
 
     # Display the original SEM image, SEM image with defect, and the defect mask
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
