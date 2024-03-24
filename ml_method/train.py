@@ -16,7 +16,7 @@ def train(reference_img_path):
     num_images = 4000
     reference_im = GeneralUtils.load_and_display_tiff_image(
         tiff_image_path=reference_img_path,
-        to_display=True)
+        to_display=False)
     # Create the dataset
     dataset = DefectDataset(reference_im, num_images=num_images, transform=get_image_and_mask_transforms())
 
