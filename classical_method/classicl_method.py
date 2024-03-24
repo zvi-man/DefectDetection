@@ -131,23 +131,24 @@ def brute_force_register_images(inspect_im, reference_im, x_shift_range: List[in
 
 def classical_defect_detection(inspect_im_path: str, reference_im_path: str,
                                display_images: bool = False) -> np.ndarray:
-    # 1. load images
+    # load images
     inspect_im = GeneralUtils.load_and_display_tiff_image(
         tiff_image_path=inspect_im_path,
         to_display=display_images)
     reference_im = GeneralUtils.load_and_display_tiff_image(
         tiff_image_path=reference_im_path,
         to_display=display_images)
+    return classical_inspect_images_numpy(inspect_im, reference_im)
 
-    # 2. registration of the reference image
+
+def classical_inspect_images_numpy(inspect_im: np.ndarray, reference_im: np.ndarray) -> np.ndarray:
+    # 1. registration of the reference image
     # registered_reference_im = binarize_register_images(inspect_im, reference_im)  # works
     registered_reference_im = brute_force_register_images(inspect_im, reference_im)  # works better
-
-    # 3. subtract the 2 images
+    # 2. subtract the 2 images
     diff = GeneralUtils.subtract_2_images_only_non_zero_pixels(inspect_im, registered_reference_im)
     DisplayUtils.display_image(diff, title="Difference")
-
-    # 4. create mask from diff image
+    # 3. create mask from diff image
     diff_binary_img = diff_image_to_mask(diff)
     return diff_binary_img
 

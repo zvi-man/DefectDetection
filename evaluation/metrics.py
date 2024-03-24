@@ -1,6 +1,6 @@
 
 
-def f1_score(y_true, y_pred):
+def f1_score_masks(y_true, y_pred, pos_label=1):
     """
     Compute the F1 score.
 
@@ -11,9 +11,9 @@ def f1_score(y_true, y_pred):
     Returns:
         float: F1 score.
     """
-    true_positives = sum((y_true == 1) & (y_pred == 1))
-    false_positives = sum((y_true == 0) & (y_pred == 1))
-    false_negatives = sum((y_true == 1) & (y_pred == 0))
+    true_positives = sum((y_true == pos_label) & (y_pred == pos_label))
+    false_positives = sum((y_true != pos_label) & (y_pred == pos_label))
+    false_negatives = sum((y_true == pos_label) & (y_pred != pos_label))
 
     precision = true_positives / (true_positives + false_positives)
     recall = true_positives / (true_positives + false_negatives)

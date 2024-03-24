@@ -69,7 +69,7 @@ def train(reference_img_path):
                 outputs = model(images)
                 loss = criterion(outputs, masks)
                 loss_val.append(loss.item())
-                f1_val.append(f1_score(masks.cpu().numpy().flatten(), outputs.cpu().numpy().flatten()))
+                f1_val.append(f1_score(masks.cpu().numpy().flatten(), outputs.cpu().numpy().flatten()) > 0.5)
 
             train_loss_mean = np.mean(loss_train)
             val_loss_mean = np.mean(loss_val)
